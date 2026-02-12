@@ -79,9 +79,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
       const scales = 2;
       const installedCapacity = totalChairs * turnsPerDay * scales; 
 
-      // Efetiva: Capacidade Operacional Meta (85% da Instalada)
-      // Representa o ideal operacional considerando margem de segurança/manutenção/absenteísmo
-      const effectiveCapacity = Math.round(installedCapacity * 0.85);
+      // Efetiva: Capacidade Operacional Meta (100% da Instalada)
+      const effectiveCapacity = installedCapacity;
 
       groups.forEach(group => {
           data[group].forEach(chair => {
@@ -328,8 +327,8 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
                      <MetricCard 
                         label="Capacidade Efetiva" 
                         value={report.effectiveCapacity} 
-                        subtext="85% - Meta Operacional Segura" 
-                        formula={`${report.installedCapacity} Vagas Totais × 0.85 (Fator Meta)`}
+                        subtext="100% - Meta Operacional" 
+                        formula={`${report.installedCapacity} Vagas Totais (Sem margem)`}
                         color="emerald" 
                      />
                      <MetricCard 
@@ -346,7 +345,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
                      <MetricCard 
                         label="Taxa de Eficiência" 
                         value={`${report.efficiencyRate.toFixed(1)}%`}
-                        subtext="Real vs Efetiva (85%)" 
+                        subtext="Real vs Efetiva (100%)" 
                         color="blue" 
                      />
                      <MetricCard 
@@ -358,7 +357,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
                      <MetricCard 
                         label="Capacidade Ociosa" 
                         value={report.absorbableCapacity} 
-                        subtext="Vagas até atingir 85%" 
+                        subtext="Vagas até atingir 100%" 
                         color="amber" 
                      />
                       <MetricCard 
