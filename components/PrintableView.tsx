@@ -44,11 +44,11 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ data, activeTab, d
           <div className="text-right flex flex-col items-end gap-2">
              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Legenda de Tratamento</div>
              <div className="flex gap-3 text-xs font-black uppercase">
-                <span className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-slate-900 rounded-md shadow-sm">
-                    <span className="w-2 h-2 bg-slate-900 rounded-full"></span> HD (Convencional)
+                <span className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-indigo-600 rounded-md shadow-sm text-indigo-900">
+                    <span className="w-2 h-2 bg-indigo-600 rounded-full"></span> HD (Convencional)
                 </span>
-                <span className="flex items-center gap-2 px-3 py-1 bg-slate-200 border-2 border-slate-400 rounded-md text-slate-600">
-                    <span className="w-2 h-2 bg-slate-500 rounded-full"></span> HDF (Online)
+                <span className="flex items-center gap-2 px-3 py-1 bg-white border-2 border-rose-600 rounded-md text-rose-900">
+                    <span className="w-2 h-2 bg-rose-600 rounded-full"></span> HDF (Online)
                 </span>
              </div>
           </div>
@@ -74,12 +74,12 @@ export const PrintableView: React.FC<PrintableViewProps> = ({ data, activeTab, d
                 
                 {/* Colunas dos Turnos */}
                 {[chair.turn1, chair.turn2, chair.turn3].map((patient, idx) => (
-                  <td key={idx} className={`border-2 border-slate-900 p-2 align-top h-20 ${patient?.treatment === 'HDF' ? 'bg-[url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZjFmMhZjIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNjYmQ1ZTEiLz4KPC9zdmc+")]' : ''}`}>
+                  <td key={idx} className={`border-2 border-slate-900 p-2 align-top h-20 ${patient?.treatment === 'HDF' ? 'bg-[url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZlNGU2Ii8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiNmZGM1ZDMiLz4KPC9zdmc+")]' : ''}`}>
                     {patient ? (
                       <div className="h-full flex flex-col justify-between relative">
                         {/* Marcador HDF Discreto no canto */}
                         {patient.treatment === 'HDF' && (
-                            <div className="absolute top-0 right-0 px-1.5 py-0.5 bg-slate-800 text-white text-[9px] font-black rounded-bl-lg">HDF</div>
+                            <div className="absolute top-0 right-0 px-1.5 py-0.5 bg-rose-600 text-white text-[9px] font-black rounded-bl-lg">HDF</div>
                         )}
                         
                         {/* Nome do Paciente */}

@@ -142,17 +142,17 @@ export const PatientModal: React.FC<PatientModalProps> = ({
   };
 
   const labelClass = "text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] mb-2 block ml-1";
-  const inputClass = "w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[1.2rem] font-bold text-slate-900 focus:ring-4 focus:ring-cyan-600/10 focus:border-cyan-600 transition-all outline-none";
+  const inputClass = "w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-[1.2rem] font-bold text-slate-900 focus:ring-4 focus:ring-indigo-600/10 focus:border-indigo-600 transition-all outline-none";
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-6">
       <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-3xl overflow-hidden animate-appear flex flex-col max-h-[95vh]">
-        <div className="bg-slate-900 px-10 py-6 shrink-0 flex justify-between items-center text-white">
+        <div className="bg-indigo-950 px-10 py-6 shrink-0 flex justify-between items-center text-white">
           <div className="flex items-center gap-5">
-            <div className="p-3 bg-cyan-600 rounded-2xl shadow-lg shadow-cyan-600/20"><User size={24}/></div>
+            <div className="p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-600/20"><User size={24}/></div>
             <div>
               <h3 className="text-lg font-black tracking-tight uppercase">{initialData ? 'Editar Prontuário' : 'Novo Cadastro'}</h3>
-              <p className="text-[10px] font-bold text-cyan-400 uppercase tracking-[0.2em] mt-1">Nefrologia Hospitalar</p>
+              <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] mt-1">Nefrologia Hospitalar</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all text-white/50 hover:text-white"><X size={20} /></button>
@@ -188,8 +188,8 @@ export const PatientModal: React.FC<PatientModalProps> = ({
                 </div>
              </div>
              
-             <div className="bg-cyan-50/50 p-4 rounded-2xl border border-cyan-100/50">
-                <label className="text-[10px] font-black text-cyan-600 uppercase tracking-[0.15em] mb-2 flex items-center gap-2">
+             <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/50">
+                <label className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.15em] mb-2 flex items-center gap-2">
                     <CalendarDays size={12} /> Dias Específicos (Obrigatório)
                 </label>
                 <div className="flex gap-2">
@@ -203,8 +203,8 @@ export const PatientModal: React.FC<PatientModalProps> = ({
                                 className={`
                                     flex-1 py-3 px-2 rounded-xl text-xs font-black uppercase transition-all border-2
                                     ${isSelected 
-                                        ? 'bg-cyan-600 text-white border-cyan-600 shadow-lg shadow-cyan-600/20' 
-                                        : 'bg-white text-slate-400 border-slate-200 hover:border-cyan-300 hover:text-cyan-500'}
+                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/20' 
+                                        : 'bg-white text-slate-400 border-slate-200 hover:border-indigo-300 hover:text-indigo-500'}
                                 `}
                             >
                                 {day}
@@ -212,7 +212,7 @@ export const PatientModal: React.FC<PatientModalProps> = ({
                         );
                     })}
                 </div>
-                <p className="text-[9px] font-bold text-cyan-700/60 mt-2 text-center">
+                <p className="text-[9px] font-bold text-indigo-700/60 mt-2 text-center">
                     Selecione os dias que o paciente virá. O sistema agendará automaticamente nas respectivas escalas.
                 </p>
              </div>
@@ -252,7 +252,7 @@ export const PatientModal: React.FC<PatientModalProps> = ({
                     <Grip size={12} className="inline mr-1 mb-0.5" /> 
                     Seleção de Assento
                 </label>
-                <span className="text-[10px] font-black text-cyan-600 uppercase bg-cyan-50 px-3 py-1.5 rounded-lg border border-cyan-100">
+                <span className="text-[10px] font-black text-indigo-600 uppercase bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
                     {selectedChairs.length} Selecionados
                 </span>
             </div>
@@ -276,10 +276,10 @@ export const PatientModal: React.FC<PatientModalProps> = ({
                                     ${isSelected 
                                         ? isBed
                                             ? 'bg-teal-500 border-teal-600 text-white shadow-xl shadow-teal-500/30 z-10 scale-105' // Bed Selected
-                                            : 'bg-cyan-500 border-cyan-600 text-white shadow-xl shadow-cyan-500/30 z-10 scale-105' // Chair Selected
+                                            : 'bg-indigo-500 border-indigo-600 text-white shadow-xl shadow-indigo-500/30 z-10 scale-105' // Chair Selected
                                         : isBed
                                             ? 'bg-slate-100 border-slate-200 text-slate-400 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600' // Bed Unselected
-                                            : 'bg-white border-slate-100 text-slate-400 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-600 hover:shadow-lg' // Chair Unselected
+                                            : 'bg-white border-slate-100 text-slate-400 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 hover:shadow-lg' // Chair Unselected
                                     }
                                 `}
                             >
@@ -294,7 +294,7 @@ export const PatientModal: React.FC<PatientModalProps> = ({
                                         <div className={`transition-colors duration-300 ${
                                             isSelected 
                                                 ? 'text-white/80' 
-                                                : isBed ? 'text-slate-300 group-hover:text-teal-500' : 'text-slate-300 group-hover:text-cyan-500'
+                                                : isBed ? 'text-slate-300 group-hover:text-teal-500' : 'text-slate-300 group-hover:text-indigo-500'
                                         }`}>
                                             {isBed ? <BedDouble size={24} strokeWidth={2} /> : <Armchair size={24} strokeWidth={2} />}
                                         </div>
@@ -337,7 +337,7 @@ export const PatientModal: React.FC<PatientModalProps> = ({
               </div>
             )}
             {!isConfirmingDelete && (
-              <button type="submit" className="flex-[2] py-4 bg-cyan-600 text-white rounded-2xl font-black text-[11px] uppercase shadow-lg hover:bg-cyan-700 flex items-center justify-center gap-3 transition-all hover:scale-[1.02]">
+              <button type="submit" className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black text-[11px] uppercase shadow-lg hover:bg-indigo-700 flex items-center justify-center gap-3 transition-all hover:scale-[1.02]">
                 <Save size={18} /> Salvar {selectedChairs.length > 1 ? `(${selectedChairs.length})` : ''}
               </button>
             )}

@@ -5,7 +5,7 @@ import { cleanAIJsonResponse, OPERATING_HOURS_START, OPERATING_HOURS_END, SETUP_
 import { 
   Sparkles, Loader2, BrainCircuit, TrendingUp, TrendingDown, 
   Target, Zap, Users, Activity, UserPlus, CheckCircle2, 
-  BarChart3, PieChart, ShieldCheck, Clock, PlusCircle, LayoutDashboard, Crosshair, Stethoscope, AlertTriangle, Armchair, ArrowRight, Maximize, Ruler, ArrowLeftRight, MoveRight, Search, ThumbsUp, Calendar, ExternalLink, Scale, Calculator
+  BarChart3, PieChart, ShieldCheck, Clock, PlusCircle, LayoutDashboard, Crosshair, Stethoscope, AlertTriangle, Armchair, ArrowRight, Maximize, Ruler, ArrowLeftRight, MoveRight, Search, ThumbsUp, Calendar, ExternalLink, Scale, Calculator, BarChart, Percent
 } from 'lucide-react';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -19,14 +19,14 @@ const STANDARD_SESSION_MINUTES = 240; // 4 Horas
 const MIN_CLEANING_TIME = 30; // 30 min intervalo tecnico
 
 // Card Simples para Métricas com Fórmula
-const MetricCard: React.FC<{ label: string, value: string | number, subtext: string, formula?: string, color: 'emerald' | 'blue' | 'amber' | 'rose' | 'indigo' | 'cyan' | 'slate' }> = ({ label, value, subtext, formula, color }) => {
+const MetricCard: React.FC<{ label: string, value: string | number, subtext: string, formula?: string, color: 'emerald' | 'blue' | 'amber' | 'rose' | 'indigo' | 'violet' | 'slate' }> = ({ label, value, subtext, formula, color }) => {
     const colors = {
         emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200',
         blue: 'bg-blue-50 text-blue-700 border-blue-200',
         amber: 'bg-amber-50 text-amber-700 border-amber-200',
         rose: 'bg-rose-50 text-rose-700 border-rose-200',
         indigo: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-        cyan: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+        violet: 'bg-violet-50 text-violet-700 border-violet-200',
         slate: 'bg-slate-100 text-slate-700 border-slate-200'
     };
     return (
@@ -92,39 +92,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
               // Ordena por horário
               patients.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
 
-              // --- ANÁLISE DE OTIMIZAÇÃO (CANDIDATOS A MOVER) ---
-              if (patients.length > 0) {
-                  const firstP = patients[0];
-                  const firstStart = timeToMinutes(firstP.startTime);
-                  
-                  // Identificar qual é o turno exato deste paciente para permitir edição
-                  let turnNum: 1|2|3 = 1;
-                  if (chair.turn1?.id === firstP.id) turnNum = 1;
-                  else if (chair.turn2?.id === firstP.id) turnNum = 2;
-                  else if (chair.turn3?.id === firstP.id) turnNum = 3;
-
-                  if (firstStart >= 360) { 
-                       optimizationCandidates.push({
-                           type: 'LATE_START',
-                           patient: firstP.name,
-                           chair: chair.chairNumber,
-                           turn: turnNum, // Adicionado para navegação
-                           group: group,
-                           currentStart: firstP.startTime,
-                           idealStart: "05:30",
-                           impact: `Perda de ${firstStart - 330} min no início`
-                       });
-                  }
-              }
-
               // --- ANÁLISE DE VAGAS (GAPS) ---
               let cursor = clinicStartMins;
+              const chairGaps: { start: number, end: number, duration: number }[] = [];
 
               patients.forEach(p => {
                   const pStart = timeToMinutes(p.startTime);
                   const pEnd = pStart + parseDurationMinutes(p.duration);
                   
                   if ((pStart - cursor) >= (STANDARD_SESSION_MINUTES + MIN_CLEANING_TIME)) {
+                      chairGaps.push({ start: cursor, end: pStart, duration: pStart - cursor });
                       gapsFound.push({
                           dayGroup: group,
                           chairNumber: chair.chairNumber,
@@ -139,6 +116,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
               });
 
               if ((clinicEndMins - cursor) >= STANDARD_SESSION_MINUTES) {
+                   chairGaps.push({ start: cursor, end: clinicEndMins, duration: clinicEndMins - cursor });
                    gapsFound.push({
                       dayGroup: group,
                       chairNumber: chair.chairNumber,
@@ -148,6 +126,41 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
                       canFitStandardSession: true
                    });
               }
+
+              // --- ANÁLISE DE OTIMIZAÇÃO E ANTECIPAÇÃO ---
+              // Lógica de Antecipação: Verificar se um paciente está no 3º turno (tarde) e existe um "gap" na mesma poltrona
+              patients.forEach(p => {
+                  const pStart = timeToMinutes(p.startTime);
+                  
+                  // Identificar qual é o turno exato deste paciente
+                  let turnNum: 1|2|3 = 1;
+                  if (chair.turn1?.id === p.id) turnNum = 1;
+                  else if (chair.turn2?.id === p.id) turnNum = 2;
+                  else if (chair.turn3?.id === p.id) turnNum = 3;
+
+                  // Se o paciente começa depois das 13:00 (Indício de 3º Turno) e estamos buscando antecipação
+                  if (pStart >= 780) { 
+                      const pDur = parseDurationMinutes(p.duration);
+                      
+                      // 1. Verifica se cabe em algum GAP anterior NA MESMA POLTRONA (1º ou 2º turno)
+                      const fittingGap = chairGaps.find(gap => gap.end <= pStart && gap.duration >= pDur);
+
+                      if (fittingGap) {
+                          optimizationCandidates.push({
+                              type: 'ANTICIPATION',
+                              patient: p.name,
+                              chair: chair.chairNumber,
+                              turn: turnNum,
+                              group: group,
+                              currentStart: p.startTime,
+                              idealStart: minutesToTime(fittingGap.start),
+                              impact: `Ganho de ${Math.floor((pStart - fittingGap.start)/60)}h`,
+                              action: 'Antecipar para 1º/2º Turno'
+                          });
+                      }
+                  }
+              });
+
           });
       });
 
@@ -173,6 +186,12 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
           globalOccupancyRate,
           gapsFound,
           optimizationCandidates,
+          // Métricas Clínicas
+          hdCount: stats.hdCount,
+          hdfCount: stats.hdfCount,
+          hdPercent: stats.hdPercent,
+          hdfPercent: stats.hdfPercent,
+          turnStats: stats.turnStats,
           math: {
               chairs: totalChairs,
               turns: turnsPerDay,
@@ -242,26 +261,28 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
               // O horário sugerido é o início do buraco
               const suggestedStart = slot.start;
 
-              // Análise de Qualidade do Horário (Score)
-              // Turno 1 Ideal: ~05:30 (330min)
-              // Turno 2 Ideal: ~10:30 (630min)
-              // Turno 3 Ideal: ~15:30 (930min)
-
-              if (Math.abs(suggestedStart - 330) <= 30) {
-                  turnLabel = 1; score = 100; quality = 'Perfeita'; badgeColor = 'emerald';
-              } else if (Math.abs(suggestedStart - 630) <= 60) {
-                  turnLabel = 2; score = 100; quality = 'Perfeita'; badgeColor = 'emerald';
-              } else if (Math.abs(suggestedStart - 930) <= 60) {
-                  turnLabel = 3; score = 100; quality = 'Perfeita'; badgeColor = 'emerald';
-              } else {
-                  // Se não é perfeito, mas cabe
+              // Análise de Qualidade - 3 TURNOS RÍGIDOS
+              // 1º Turno: Início entre 05:30 e 07:00
+              if (suggestedStart >= 330 && suggestedStart <= 420) { 
+                  turnLabel = 1; score = 100; quality = 'Perfeita (1º Turno)'; badgeColor = 'emerald';
+              } 
+              // 2º Turno: Início entre 10:00 e 12:00
+              else if (suggestedStart >= 600 && suggestedStart <= 720) { 
+                  turnLabel = 2; score = 90; quality = 'Ótima (2º Turno)'; badgeColor = 'emerald';
+              } 
+              // 3º Turno: Início entre 15:00 e 17:00
+              else if (suggestedStart >= 900 && suggestedStart <= 1020) { 
+                  turnLabel = 3; score = 60; quality = '3º Turno'; badgeColor = 'blue';
+              } 
+              // Fora de padrão mas possível
+              else {
                   if (suggestedStart < 600) turnLabel = 1;
                   else if (suggestedStart < 900) turnLabel = 2;
                   else turnLabel = 3;
                   
-                  score = 70;
-                  quality = 'Boa - Encaixe';
-                  badgeColor = 'blue';
+                  score = 50;
+                  quality = 'Encaixe';
+                  badgeColor = 'amber';
               }
 
               suggestions.push({
@@ -276,7 +297,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
           });
       });
 
-      // Ordenar: Melhores Scores primeiro, depois por Poltrona
+      // Ordenar: Melhores Scores primeiro (priorizando manhã), depois por Poltrona
       suggestions.sort((a, b) => {
           if (b.score !== a.score) return b.score - a.score;
           return parseInt(a.chair) - parseInt(b.chair);
@@ -328,44 +349,80 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
                         label="Capacidade Efetiva" 
                         value={report.effectiveCapacity} 
                         subtext="100% - Meta Operacional" 
-                        formula={`${report.installedCapacity} Vagas Totais (Sem margem)`}
+                        formula={`${report.installedCapacity} Vagas Totais (3 Turnos)`}
                         color="emerald" 
                      />
                      <MetricCard 
                         label="Capacidade Real" 
                         value={report.realCapacity} 
                         subtext={`${report.globalOccupancyRate.toFixed(1)}% da Instalada (Meta: ${report.effectiveCapacity})`} 
-                        formula="Σ Total de Slots Agendados (Turnos Ocupados)"
+                        formula="Σ Total de Slots Agendados"
                         color={report.realCapacity > report.effectiveCapacity ? 'rose' : 'indigo'} 
                      />
                  </div>
 
-                 {/* 1.1 KPIs SECUNDÁRIOS */}
-                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                     <MetricCard 
-                        label="Taxa de Eficiência" 
-                        value={`${report.efficiencyRate.toFixed(1)}%`}
-                        subtext="Real vs Efetiva (100%)" 
-                        color="blue" 
-                     />
-                     <MetricCard 
-                        label="Pacientes Únicos" 
-                        value={report.uniquePatients} 
-                        subtext="Total de CPFs (Pessoas)" 
-                        color="cyan" 
-                     />
-                     <MetricCard 
-                        label="Capacidade Ociosa" 
-                        value={report.absorbableCapacity} 
-                        subtext="Vagas até atingir 100%" 
-                        color="amber" 
-                     />
-                      <MetricCard 
-                        label="Vagas Imediatas" 
-                        value={report.gapsFound.length} 
-                        subtext="Prontas para uso (4h)" 
-                        color="rose" 
-                     />
+                 {/* 2. NOVO PAINEL DE DIAGNÓSTICO CLÍNICO E TURNOS */}
+                 <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8">
+                     <div className="flex items-center gap-4 mb-6">
+                         <div className="p-3 bg-violet-100 text-violet-600 rounded-2xl"><BarChart size={24} /></div>
+                         <h3 className="text-lg font-black uppercase text-slate-800">Mix Clínico & Distribuição</h3>
+                     </div>
+
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                         {/* MIX HD vs HDF */}
+                         <div className="space-y-6">
+                             <div className="flex justify-between items-end mb-2">
+                                 <h4 className="text-xs font-black uppercase text-slate-500 tracking-widest">Tipo de Terapia</h4>
+                                 <span className="text-[10px] font-bold text-slate-400">Total: {report.realCapacity}</span>
+                             </div>
+                             
+                             {/* Barra HD */}
+                             <div className="space-y-2">
+                                 <div className="flex justify-between text-xs font-black uppercase">
+                                     <span className="text-indigo-600">Hemodiálise (HD)</span>
+                                     <span className="text-indigo-900">{report.hdPercent}% ({report.hdCount})</span>
+                                 </div>
+                                 <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                                     <div style={{ width: `${report.hdPercent}%` }} className="h-full bg-indigo-500 rounded-full"></div>
+                                 </div>
+                             </div>
+
+                             {/* Barra HDF */}
+                             <div className="space-y-2">
+                                 <div className="flex justify-between text-xs font-black uppercase">
+                                     <span className="text-rose-600">Hemodiafiltração (HDF)</span>
+                                     <span className="text-rose-900">{report.hdfPercent}% ({report.hdfCount})</span>
+                                 </div>
+                                 <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                                     <div style={{ width: `${report.hdfPercent}%` }} className="h-full bg-rose-500 rounded-full"></div>
+                                 </div>
+                             </div>
+                         </div>
+
+                         {/* OCUPAÇÃO POR TURNO (1, 2, 3) */}
+                         <div className="space-y-4">
+                             <div className="flex justify-between items-end mb-2">
+                                 <h4 className="text-xs font-black uppercase text-slate-500 tracking-widest">Ocupação por Turno</h4>
+                             </div>
+                             <div className="grid grid-cols-3 gap-4">
+                                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+                                     <p className="text-[10px] font-black uppercase text-slate-400 mb-1">1º Turno</p>
+                                     <p className="text-2xl font-black text-slate-800">{report.turnStats.t1}</p>
+                                 </div>
+                                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+                                     <p className="text-[10px] font-black uppercase text-slate-400 mb-1">2º Turno</p>
+                                     <p className="text-2xl font-black text-slate-800">{report.turnStats.t2}</p>
+                                 </div>
+                                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center">
+                                     <p className="text-[10px] font-black uppercase text-slate-400 mb-1">3º Turno</p>
+                                     <p className="text-2xl font-black text-slate-800">{report.turnStats.t3}</p>
+                                 </div>
+                             </div>
+                             <p className="text-[9px] text-center text-slate-400 font-bold uppercase mt-2">
+                                 Não existe turno noturno. Apenas 1º, 2º e 3º turnos ativos.
+                             </p>
+                         </div>
+                     </div>
                  </div>
 
                  {/* NOVA SEÇÃO: SIMULADOR DE ALOCAÇÃO */}
@@ -472,48 +529,48 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
 
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                      
-                     {/* 2. OPORTUNIDADES DE MELHORIA (OPTIMIZATIONS) */}
+                     {/* 3. OPORTUNIDADES DE ANTECIPAÇÃO (3º -> 1º/2º) */}
                      <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 h-full flex flex-col">
                          <div className="flex justify-between items-center mb-6">
                              <div className="flex items-center gap-3">
                                  <div className="p-2 bg-rose-100 text-rose-600 rounded-lg"><AlertTriangle size={20}/></div>
-                                 <h3 className="text-lg font-black uppercase text-slate-800">Gargalos de Horário</h3>
+                                 <h3 className="text-lg font-black uppercase text-slate-800">Antecipação de Turno</h3>
                              </div>
-                             <span className="bg-rose-50 text-rose-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase">Ação Necessária</span>
+                             <span className="bg-rose-50 text-rose-700 px-3 py-1 rounded-lg text-[10px] font-black uppercase">Otimização</span>
                          </div>
                          
                          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3 max-h-[400px]">
                              {report.optimizationCandidates.length === 0 ? (
-                                 <div className="text-center py-10 text-slate-300 text-xs font-bold uppercase">Nenhum gargalo crítico identificado.</div>
+                                 <div className="text-center py-10 text-slate-300 text-xs font-bold uppercase">Nenhuma oportunidade de antecipação do 3º turno.</div>
                              ) : (
                                  report.optimizationCandidates.map((opt: any, idx: number) => (
                                      <div 
                                         key={idx} 
                                         onClick={() => onPatientClick(opt.chair, opt.turn, opt.group)}
-                                        className="flex flex-col gap-2 p-4 rounded-2xl bg-rose-50/50 border border-rose-100 hover:border-rose-300 hover:bg-rose-100 transition-all cursor-pointer group"
+                                        className={`flex flex-col gap-2 p-4 rounded-2xl border transition-all cursor-pointer group ${opt.type === 'ANTICIPATION' ? 'bg-emerald-50/50 border-emerald-100 hover:border-emerald-300 hover:bg-emerald-100' : 'bg-rose-50/50 border-rose-100 hover:border-rose-300 hover:bg-rose-100'}`}
                                         title="Clique para editar este paciente no mapa"
                                      >
                                          <div className="flex justify-between items-start">
                                              <div>
-                                                 <p className="text-[10px] font-black uppercase text-slate-500 group-hover:text-rose-600 transition-colors flex items-center gap-2">
+                                                 <p className="text-[10px] font-black uppercase text-slate-500 flex items-center gap-2">
                                                     {opt.group} • Poltrona {opt.chair} <ExternalLink size={10} className="opacity-0 group-hover:opacity-100 transition-opacity"/>
                                                  </p>
                                                  <p className="text-sm font-black text-slate-800">{opt.patient}</p>
                                              </div>
                                              <div className="text-right">
-                                                 <span className="text-[10px] font-bold text-rose-500 bg-white px-2 py-1 rounded border border-rose-100">{opt.impact}</span>
+                                                 <span className={`text-[10px] font-bold bg-white px-2 py-1 rounded border ${opt.type === 'ANTICIPATION' ? 'text-emerald-600 border-emerald-100' : 'text-rose-500 border-rose-100'}`}>{opt.impact}</span>
                                              </div>
                                          </div>
                                          
-                                         <div className="flex items-center gap-3 mt-2 pt-2 border-t border-rose-100/50">
+                                         <div className={`flex items-center gap-3 mt-2 pt-2 border-t ${opt.type === 'ANTICIPATION' ? 'border-emerald-100/50' : 'border-rose-100/50'}`}>
                                              <div className="flex items-center gap-1.5 text-slate-400">
                                                  <Clock size={12}/> <span className="text-xs font-mono line-through">{opt.currentStart}</span>
                                              </div>
-                                             <ArrowRight size={12} className="text-emerald-500"/>
-                                             <div className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                                             <ArrowRight size={12} className={opt.type === 'ANTICIPATION' ? 'text-emerald-500' : 'text-rose-500'}/>
+                                             <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded ${opt.type === 'ANTICIPATION' ? 'bg-emerald-200 text-emerald-800' : 'bg-rose-200 text-rose-800'}`}>
                                                  <Clock size={12}/> <span className="text-xs font-black font-mono">{opt.idealStart}</span>
                                              </div>
-                                             <p className="text-[9px] text-slate-400 ml-auto">Sugestão: Antecipar</p>
+                                             <p className="text-[9px] text-slate-400 ml-auto">{opt.action}</p>
                                          </div>
                                      </div>
                                  ))
@@ -521,7 +578,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ data, onPatientCli
                          </div>
                      </div>
 
-                     {/* 3. MAPA DE VAGAS (GAPS) */}
+                     {/* 4. MAPA DE VAGAS (GAPS) */}
                      <div className="bg-emerald-50/50 rounded-[2.5rem] border border-emerald-100 p-8 h-full flex flex-col relative overflow-hidden">
                          <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-100 rounded-bl-full opacity-30 z-0"></div>
                          <div className="relative z-10 flex justify-between items-center mb-6">

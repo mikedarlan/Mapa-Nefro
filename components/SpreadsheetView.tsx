@@ -235,8 +235,8 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ data, onUpdate
 
            <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200">
                <button onClick={() => setFilterDay('ALL')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${filterDay === 'ALL' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-slate-600'}`}>Todos</button>
-               <button onClick={() => setFilterDay('SEG/QUA/SEX')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${filterDay === 'SEG/QUA/SEX' ? 'bg-cyan-100 text-cyan-700' : 'text-slate-400 hover:text-slate-600'}`}>Seg/Qua</button>
-               <button onClick={() => setFilterDay('TER/QUI/SÁB')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${filterDay === 'TER/QUI/SÁB' ? 'bg-fuchsia-100 text-fuchsia-700' : 'text-slate-400 hover:text-slate-600'}`}>Ter/Qui</button>
+               <button onClick={() => setFilterDay('SEG/QUA/SEX')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${filterDay === 'SEG/QUA/SEX' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-400 hover:text-slate-600'}`}>Seg/Qua</button>
+               <button onClick={() => setFilterDay('TER/QUI/SÁB')} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${filterDay === 'TER/QUI/SÁB' ? 'bg-rose-100 text-rose-700' : 'text-slate-400 hover:text-slate-600'}`}>Ter/Qui</button>
            </div>
         </div>
       </div>
@@ -244,8 +244,8 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ data, onUpdate
       {/* Barra de Busca */}
       <div className="px-6 py-4 border-b border-slate-50 bg-white grid grid-cols-1 md:grid-cols-2 gap-4 shrink-0">
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-cyan-500 transition-colors" size={16} />
-          <input type="text" placeholder="Buscar paciente por nome..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase focus:border-cyan-500 outline-none transition-all placeholder:text-slate-300" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={16} />
+          <input type="text" placeholder="Buscar paciente por nome..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase focus:border-indigo-500 outline-none transition-all placeholder:text-slate-300" />
         </div>
         <div className="relative group">
            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={16} />
@@ -312,7 +312,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ data, onUpdate
                        ) : (
                            <div className={`
                              inline-flex items-center gap-1.5 text-[9px] font-black px-2 py-1 rounded-lg uppercase border
-                             ${isHDF ? 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-100' : 'bg-sky-50 text-sky-600 border-sky-100'}
+                             ${isHDF ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-indigo-50 text-indigo-600 border-indigo-100'}
                            `}>
                              {isHDF ? 'HDF' : 'HD'}
                            </div>
@@ -330,7 +330,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ data, onUpdate
                               className="w-full bg-white border-2 border-indigo-200 rounded-lg px-3 py-2 text-xs font-black uppercase text-indigo-900 outline-none focus:border-indigo-500 shadow-sm"
                            />
                        ) : (
-                           <p className="text-xs font-black uppercase text-slate-800 cursor-pointer hover:text-cyan-600 transition-colors">{rec.name}</p>
+                           <p className="text-xs font-black uppercase text-slate-800 cursor-pointer hover:text-indigo-600 transition-colors">{rec.name}</p>
                        )}
                     </td>
 
@@ -376,7 +376,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ data, onUpdate
                            </div>
                        ) : (
                            <div className="flex flex-col">
-                               <span className="text-[10px] font-black text-cyan-600 uppercase">Poltrona {displayChair}</span>
+                               <span className="text-[10px] font-black text-indigo-600 uppercase">Poltrona {displayChair}</span>
                                <span className="text-[9px] font-bold text-slate-400 uppercase">{displayTurn}º Turno</span>
                            </div>
                        )}
@@ -433,7 +433,7 @@ export const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({ data, onUpdate
                             </div>
                         ) : (
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => startEditing(rec)} className="p-2 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all" title="Editar Linha">
+                                <button onClick={() => startEditing(rec)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Editar Linha">
                                     <Edit size={14}/>
                                 </button>
                                 <button onClick={() => initiateDelete(rec.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Excluir">

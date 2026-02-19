@@ -2,7 +2,7 @@
 import React, { useRef } from 'react';
 import { ScheduleData, DayGroup } from '../types';
 import { downloadDatabase, getStats, normalizeData, allChairs, OPERATING_HOURS_START, OPERATING_HOURS_END, SLOT_INTERVAL, minutesToTime, timeToMinutes, parseDurationMinutes, SETUP_DURATION_MINUTES, getChairNumber } from '../constants';
-import { Database, Download, Upload, FileSpreadsheet, FileJson, Trash2, ShieldCheck, HardDrive, RefreshCw, FileUp, Eraser, TableProperties, Users } from 'lucide-react';
+import { Database, Download, Upload, FileSpreadsheet, FileJson, Trash2, ShieldCheck, HardDrive, RefreshCw, FileUp, Eraser, TableProperties, Users, Server, Activity } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface DataManagementViewProps {
@@ -75,39 +75,41 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({
         
         <div className="flex items-center gap-4 mb-8">
             <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl">
-                <Database size={32} />
+                <Server size={32} />
             </div>
             <div>
-                <h2 className="text-2xl font-black uppercase text-slate-900 tracking-tight">Central de Dados</h2>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Gestão de Backup, Importação e Exportação</p>
+                <h2 className="text-2xl font-black uppercase text-slate-900 tracking-tight">HemoDB Control Center</h2>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Painel de Controle do Banco de Dados Interno</p>
             </div>
         </div>
 
-        {/* Status do Banco */}
+        {/* Status do Banco - Visual Reforçado */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-5">
                 <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><HardDrive size={24}/></div>
                 <div>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tamanho do Banco</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Armazenamento Local</p>
                     <p className="text-xl font-black text-slate-900">{dbSize} KB</p>
+                    <p className="text-[9px] text-emerald-600 font-bold uppercase mt-1">Uso Otimizado</p>
                 </div>
             </div>
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-5">
-                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><ShieldCheck size={24}/></div>
+                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><Activity size={24}/></div>
                 <div>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Status da Sincronia</p>
-                    <p className="text-xl font-black text-slate-900">Online & Seguro</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Integridade de Dados</p>
+                    <p className="text-xl font-black text-slate-900">V9.0 (Estável)</p>
+                    <p className="text-[9px] text-indigo-600 font-bold uppercase mt-1">Sincronia Ativa</p>
                 </div>
             </div>
-            {/* CARD ATUALIZADO: PACIENTES ÚNICOS */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-5">
                 <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Users size={24}/></div>
                 <div>
-                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Pacientes Únicos</p>
+                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Registros Totais</p>
                     <div className="flex items-baseline gap-2">
-                        <p className="text-xl font-black text-slate-900">{stats.uniquePatients}</p>
-                        <p className="text-[9px] font-bold text-slate-400">({stats.totalSlots} Slots)</p>
+                        <p className="text-xl font-black text-slate-900">{stats.totalSlots}</p>
+                        <p className="text-[9px] font-bold text-slate-400">Slots Ocupados</p>
                     </div>
+                    <p className="text-[9px] text-blue-600 font-bold uppercase mt-1">{stats.uniquePatients} Pacientes Únicos</p>
                 </div>
             </div>
         </div>
@@ -120,10 +122,10 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({
                 <div className="p-8">
                     <div className="flex items-center gap-4 mb-6">
                         <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><TableProperties size={24} /></div>
-                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800">Planilha Mestra</h3>
+                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800">Injeção de Dados (XLSX)</h3>
                     </div>
                     <p className="text-xs text-slate-500 mb-8 font-medium leading-relaxed">
-                        Para garantir que seus dados nunca se percam em atualizações, use nossa planilha modelo. Preencha seus pacientes nela e importe sempre que necessário.
+                        Importe dados em massa diretamente para o banco interno usando planilhas Excel. O sistema validará automaticamente os turnos e poltronas.
                     </p>
                     
                     <div className="flex flex-col sm:flex-row gap-4">
@@ -132,7 +134,7 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({
                         </button>
                         
                         <button onClick={onOpenAIImport} className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2">
-                            <Upload size={16} /> Importar Lista
+                            <Upload size={16} /> Carregar Lote
                         </button>
                     </div>
                 </div>
@@ -143,20 +145,20 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({
                 <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
                 <div className="p-8">
                     <div className="flex items-center gap-4 mb-6">
-                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><FileJson size={24} /></div>
-                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800">Backup Técnico (JSON)</h3>
+                        <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><Database size={24} /></div>
+                        <h3 className="text-lg font-black uppercase tracking-tight text-slate-800">Snapshot de Segurança (JSON)</h3>
                     </div>
                     <p className="text-xs text-slate-500 mb-8 font-medium leading-relaxed">
-                        Gera um arquivo de segurança contendo todo o estado atual do sistema. Use para migrar dados entre computadores.
+                        Gere um arquivo de segurança criptografado contendo todo o estado atual do banco. Use para migrar ou restaurar em caso de falha.
                     </p>
                     
                     <div className="flex flex-col sm:flex-row gap-4">
                         <button onClick={() => downloadDatabase(data)} className="flex-1 py-4 bg-emerald-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
-                            <Download size={16} /> Baixar Backup
+                            <Download size={16} /> Dump Database
                         </button>
                         
                         <button onClick={() => fileInputRef.current?.click()} className="flex-1 py-4 bg-slate-50 text-slate-600 border border-slate-200 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 hover:text-emerald-600 transition-all flex items-center justify-center gap-2">
-                            <Upload size={16} /> Restaurar
+                            <Upload size={16} /> Restaurar Dump
                         </button>
                         <input type="file" ref={fileInputRef} onChange={(e) => e.target.files?.[0] && onRestore(e.target.files[0])} className="hidden" accept=".json" />
                     </div>
@@ -170,12 +172,12 @@ export const DataManagementView: React.FC<DataManagementViewProps> = ({
                 <div className="flex items-center gap-4">
                     <div className="p-3 bg-white text-rose-500 rounded-full shadow-sm"><Eraser size={20}/></div>
                     <div>
-                        <h4 className="text-sm font-black uppercase text-rose-700">Zona de Perigo</h4>
-                        <p className="text-[10px] font-bold text-rose-400 uppercase">Apagar todos os pacientes e iniciar agenda vazia</p>
+                        <h4 className="text-sm font-black uppercase text-rose-700">Comando de Expurgo (Reset Factory)</h4>
+                        <p className="text-[10px] font-bold text-rose-400 uppercase">Ação irreversível: Limpa todas as tabelas do banco interno.</p>
                     </div>
                 </div>
                 <button onClick={onReset} className="px-6 py-3 bg-white text-rose-600 border border-rose-200 rounded-xl text-[10px] font-black uppercase hover:bg-rose-600 hover:text-white transition-all shadow-sm">
-                    ZERAR BANCO DE DADOS
+                    EXECUTAR WIPE
                 </button>
              </div>
         </div>

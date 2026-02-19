@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Activity, ShieldCheck, RefreshCw, PlusCircle, Sparkles, BrainCircuit, Users, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, AlertOctagon, Database, Printer, Droplets, Zap, Lock, Download, Upload, FileJson, FileSpreadsheet, LayoutGrid, List, FileBarChart2, Eraser, SprayCan, Armchair, ZoomIn, ZoomOut, Maximize, Cloud, Clock, CalendarDays, Info } from 'lucide-react';
+import { Activity, ShieldCheck, RefreshCw, PlusCircle, Sparkles, BrainCircuit, Users, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, AlertOctagon, Database, Printer, Droplets, Zap, Lock, Download, Upload, FileJson, FileSpreadsheet, LayoutGrid, List, FileBarChart2, Eraser, SprayCan, Armchair, ZoomIn, ZoomOut, Maximize, Cloud, Clock, CalendarDays, Info, RotateCcw } from 'lucide-react';
 import { INITIAL_DATA, normalizeData, OPERATING_HOURS_START, OPERATING_HOURS_END, SETUP_DURATION_MINUTES, SLOT_INTERVAL, timeToMinutes, minutesToTime, parseDurationMinutes, saveDataSecurely, initializeDataStore, wipeAllData, snapToGrid, getStats, allChairs, createEmptySchedule } from './constants';
 import { DayGroup, Patient, ScheduleData } from './types';
 import { PatientModal } from './components/PatientModal';
@@ -38,13 +38,13 @@ const HoverTooltip: React.FC<{ info: { patient: Patient, x: number, y: number } 
     <div style={style} className="bg-slate-900/95 text-white p-4 rounded-xl shadow-2xl backdrop-blur-md border border-slate-700 w-64 pointer-events-none animate-appear z-[9999]">
         <div className="flex items-start justify-between mb-3 border-b border-white/10 pb-2">
             <h4 className="font-black uppercase text-sm leading-snug text-white line-clamp-2">{patient.name}</h4>
-            <span className={`shrink-0 text-[9px] font-black px-2 py-0.5 rounded ml-2 ${patient.treatment === 'HDF' ? 'bg-fuchsia-500 text-white' : 'bg-sky-500 text-white'}`}>
+            <span className={`shrink-0 text-[9px] font-black px-2 py-0.5 rounded ml-2 ${patient.treatment === 'HDF' ? 'bg-rose-500 text-white' : 'bg-indigo-500 text-white'}`}>
                 {patient.treatment}
             </span>
         </div>
         <div className="space-y-2">
             <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-slate-800 rounded-lg text-cyan-400">
+                <div className="p-1.5 bg-slate-800 rounded-lg text-indigo-400">
                    <Clock size={14} strokeWidth={2.5}/>
                 </div>
                 <div>
@@ -53,7 +53,7 @@ const HoverTooltip: React.FC<{ info: { patient: Patient, x: number, y: number } 
                 </div>
             </div>
             <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-slate-800 rounded-lg text-indigo-400">
+                <div className="p-1.5 bg-slate-800 rounded-lg text-rose-400">
                    <Zap size={14} strokeWidth={2.5}/>
                 </div>
                 <div>
@@ -189,7 +189,7 @@ const App: React.FC = () => {
 
     // Detecta alterações em outras abas
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key && e.key.includes('HEMOSCHEDULER_DB')) {
+        if (e.key && e.key.includes('HEMO_PRO')) {
             console.log("Detectada alteração externa no banco de dados. Sincronizando...");
             // Re-read from store carefully
             const { data: newData } = initializeDataStore();
@@ -224,6 +224,13 @@ const App: React.FC = () => {
     dataRef.current = newData;
     // 2. Trigger React Render
     setData(newData);
+  };
+
+  const handleForceReload = () => {
+      const { data: loadedData } = initializeDataStore();
+      setData(loadedData);
+      setSaveStatus('idle');
+      alert("Dados recarregados do banco de dados local.");
   };
 
   const handleResetDatabase = () => {
@@ -510,7 +517,7 @@ const App: React.FC = () => {
   if (!isStoreReady || !data) {
     return (
      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-900 text-white gap-6">
-       <div className="relative"><div className="absolute inset-0 bg-cyan-500 blur-xl opacity-20 animate-pulse"></div><Database size={64} className="text-cyan-500 relative z-10 animate-bounce" /></div>
+       <div className="relative"><div className="absolute inset-0 bg-indigo-500 blur-xl opacity-20 animate-pulse"></div><Database size={64} className="text-indigo-500 relative z-10 animate-bounce" /></div>
        <div className="text-center space-y-2"><h1 className="text-2xl font-black uppercase tracking-widest">HemoScheduler Fortress</h1><p className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] animate-pulse">Conectando ao HemoDB V2...</p></div>
      </div>
     );
@@ -521,35 +528,39 @@ const App: React.FC = () => {
   return (
     <div className="h-screen w-screen flex flex-col bg-slate-50 overflow-hidden font-sans text-slate-900">
       
-      {/* HEADER ESCURO (PRO) - Compacto */}
-      <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 shrink-0 z-50 shadow-md relative print:hidden">
+      {/* HEADER ESCURO (PRO) - Compacto e Vibrante */}
+      <header className="h-16 bg-gradient-to-r from-violet-700 via-indigo-700 to-blue-700 border-b border-indigo-800 flex items-center justify-between px-4 shrink-0 z-50 shadow-md relative print:hidden">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-1.5 rounded-xl text-white shadow-lg shadow-cyan-500/20"><Activity size={18} strokeWidth={2.5}/></div>
+          <div className="bg-white/10 p-1.5 rounded-xl text-white shadow-lg backdrop-blur-sm"><Activity size={18} strokeWidth={2.5}/></div>
           <div>
-            <h1 className="text-xs font-black uppercase text-white tracking-tighter leading-none">HemoScheduler <span className="text-cyan-400">Pro</span></h1>
+            <h1 className="text-xs font-black uppercase text-white tracking-tighter leading-none">HemoScheduler <span className="text-indigo-200">Pro</span></h1>
             <div className="flex items-center gap-2 mt-0.5">
-               {saveStatus === 'saving' && <p className="text-[8px] text-amber-400 font-bold uppercase tracking-widest flex items-center gap-1"><RefreshCw size={8} className="animate-spin" /> Gravando...</p>}
-               {saveStatus === 'saved' && <p className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1"><CheckCircle2 size={8} /> Salvo {lastSavedTime}</p>}
-               {saveStatus === 'error' && <p className="text-[8px] text-rose-400 font-bold uppercase tracking-widest flex items-center gap-1"><AlertOctagon size={8} /> Erro</p>}
-               {saveStatus === 'protected' && <p className="text-[8px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1"><ShieldCheck size={8} /> Protegido</p>}
-               {saveStatus === 'idle' && lastSavedTime && <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-1"><Cloud size={8} /> Sync ({lastSavedTime})</p>}
+               {saveStatus === 'saving' && <p className="text-[8px] text-amber-300 font-bold uppercase tracking-widest flex items-center gap-1"><RefreshCw size={8} className="animate-spin" /> Gravando...</p>}
+               {saveStatus === 'saved' && <p className="text-[8px] text-emerald-300 font-bold uppercase tracking-widest flex items-center gap-1"><CheckCircle2 size={8} /> Salvo {lastSavedTime}</p>}
+               {saveStatus === 'error' && <p className="text-[8px] text-rose-300 font-bold uppercase tracking-widest flex items-center gap-1"><AlertOctagon size={8} /> Erro</p>}
+               {saveStatus === 'protected' && (
+                   <button onClick={handleForceReload} className="text-[8px] text-cyan-300 font-bold uppercase tracking-widest flex items-center gap-1 bg-white/10 px-2 rounded hover:bg-white/20 transition-colors animate-pulse">
+                       <ShieldCheck size={8} /> Protegido (Clique p/ Recarregar)
+                   </button>
+               )}
+               {saveStatus === 'idle' && lastSavedTime && <p className="text-[8px] text-indigo-200 font-bold uppercase tracking-widest flex items-center gap-1"><Cloud size={8} /> Sync ({lastSavedTime})</p>}
             </div>
           </div>
         </div>
 
         {/* Central Navigation */}
         <div className="flex items-center gap-2">
-           <nav className="hidden md:flex bg-slate-800 p-1 rounded-xl gap-1 overflow-x-auto max-w-[50vw] custom-scrollbar">
-             <button onClick={() => setViewMode('dashboard')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'dashboard' ? 'bg-slate-700 text-cyan-400 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}>
+           <nav className="hidden md:flex bg-black/20 p-1 rounded-xl gap-1 overflow-x-auto max-w-[50vw] custom-scrollbar backdrop-blur-sm">
+             <button onClick={() => setViewMode('dashboard')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'dashboard' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-100 hover:text-white hover:bg-white/10'}`}>
                 <LayoutGrid size={12}/> <span className="hidden lg:inline">Mapa</span>
              </button>
-             <button onClick={() => setViewMode('spreadsheet')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'spreadsheet' ? 'bg-slate-700 text-cyan-400 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}>
+             <button onClick={() => setViewMode('spreadsheet')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'spreadsheet' ? 'bg-white text-indigo-700 shadow-sm' : 'text-indigo-100 hover:text-white hover:bg-white/10'}`}>
                 <List size={12}/> <span className="hidden lg:inline">Lista</span>
              </button>
-             <button onClick={() => setViewMode('analytics')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'analytics' ? 'bg-slate-700 text-fuchsia-400 shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}>
+             <button onClick={() => setViewMode('analytics')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'analytics' ? 'bg-white text-rose-600 shadow-sm' : 'text-indigo-100 hover:text-white hover:bg-white/10'}`}>
                 <BrainCircuit size={12}/> <span className="hidden lg:inline">IA & BI</span>
              </button>
-             <button onClick={() => setViewMode('data')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'data' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}>
+             <button onClick={() => setViewMode('data')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${viewMode === 'data' ? 'bg-white text-indigo-900 shadow-sm' : 'text-indigo-100 hover:text-white hover:bg-white/10'}`}>
                 <Database size={12}/> <span className="hidden lg:inline">Dados</span>
              </button>
            </nav>
@@ -558,7 +569,7 @@ const App: React.FC = () => {
               <select 
                 value={viewMode} 
                 onChange={(e) => setViewMode(e.target.value as any)}
-                className="bg-slate-800 text-white text-[10px] font-black uppercase rounded-lg px-2 py-2 outline-none border-none max-w-[80px]"
+                className="bg-indigo-900 text-white text-[10px] font-black uppercase rounded-lg px-2 py-2 outline-none border-none max-w-[80px]"
               >
                 <option value="dashboard">Mapa</option>
                 <option value="spreadsheet">Lista</option>
@@ -567,16 +578,16 @@ const App: React.FC = () => {
               </select>
            </div>
 
-           <button onClick={handleNewPatient} className="flex items-center gap-2 px-3 py-2 bg-cyan-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-500 transition-all shadow-lg shadow-cyan-600/20 active:scale-95 whitespace-nowrap">
+           <button onClick={handleNewPatient} className="flex items-center gap-2 px-3 py-2 bg-white text-indigo-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg active:scale-95 whitespace-nowrap">
               <PlusCircle size={14} /> <span className="hidden lg:inline">Novo</span>
            </button>
            
            {viewMode === 'dashboard' && (
              <div className="flex gap-1">
-                <button onClick={handleExportExcel} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all" title="Exportar Excel">
+                <button onClick={handleExportExcel} className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-xl transition-all" title="Exportar Excel">
                   <FileSpreadsheet size={18} />
                 </button>
-                <button onClick={() => setViewMode('print')} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all" title="Imprimir">
+                <button onClick={() => setViewMode('print')} className="p-2 text-indigo-200 hover:text-white hover:bg-white/10 rounded-xl transition-all" title="Imprimir">
                   <Printer size={18} />
                 </button>
              </div>
@@ -593,8 +604,8 @@ const App: React.FC = () => {
             <div className="bg-white border-b border-slate-200 px-3 py-1.5 flex justify-between items-center shrink-0 z-20 shadow-sm h-12">
                <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar">
                    <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 shrink-0">
-                       <button onClick={() => setActiveTab('SEG/QUA/SEX')} className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'SEG/QUA/SEX' ? 'bg-white text-cyan-700 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}>Seg/Qua/Sex</button>
-                       <button onClick={() => setActiveTab('TER/QUI/SÁB')} className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'TER/QUI/SÁB' ? 'bg-white text-fuchsia-700 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}>Ter/Qui/Sáb</button>
+                       <button onClick={() => setActiveTab('SEG/QUA/SEX')} className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'SEG/QUA/SEX' ? 'bg-white text-indigo-700 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}>Seg/Qua/Sex</button>
+                       <button onClick={() => setActiveTab('TER/QUI/SÁB')} className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${activeTab === 'TER/QUI/SÁB' ? 'bg-white text-rose-700 shadow-sm border border-slate-200' : 'text-slate-400 hover:text-slate-600'}`}>Ter/Qui/Sáb</button>
                    </div>
                    <div className="h-4 w-px bg-slate-200 mx-2 shrink-0"></div>
                    <div className="flex items-center gap-0.5 text-slate-400 shrink-0">
@@ -605,18 +616,18 @@ const App: React.FC = () => {
                    </div>
                </div>
                <div className="hidden sm:flex items-center gap-3 shrink-0 mr-1">
-                   {/* LEGENDA COMPACTA */}
+                   {/* LEGENDA COMPACTA ATUALIZADA */}
                    <div className="flex items-center gap-1.5">
-                       <div className="w-2.5 h-2.5 rounded-full bg-sky-500 ring-1 ring-sky-200"></div>
+                       <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 ring-1 ring-indigo-200"></div>
                        <span className="text-[9px] font-black uppercase text-slate-600 tracking-wide">HD</span>
                    </div>
                    <div className="flex items-center gap-1.5">
-                       <div className="w-2.5 h-2.5 rounded-full bg-fuchsia-500 ring-1 ring-fuchsia-200"></div>
+                       <div className="w-2.5 h-2.5 rounded-full bg-rose-500 ring-1 ring-rose-200"></div>
                        <span className="text-[9px] font-black uppercase text-slate-600 tracking-wide">HDF</span>
                    </div>
                    <div className="flex items-center gap-1.5">
-                       <div className="w-2.5 h-2.5 rounded bg-amber-50 border border-amber-200 relative overflow-hidden">
-                           <div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #f59e0b 0, #f59e0b 1px, transparent 1px, transparent 4px)' }}></div>
+                       <div className="w-2.5 h-2.5 rounded bg-red-100 border border-red-800 relative overflow-hidden">
+                           <div className="absolute inset-0 opacity-40" style={{ backgroundImage: 'repeating-linear-gradient(45deg, #7f1d1d 0, #7f1d1d 1px, transparent 1px, transparent 4px)' }}></div>
                        </div>
                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-wide">Setup</span>
                    </div>
@@ -660,12 +671,12 @@ const App: React.FC = () => {
                                 <td 
                                 key={`${chair.chairNumber}-${slot.minutes}`} 
                                 className={`p-0 group transition-all cursor-pointer h-8 border-b border-r border-slate-200 relative overflow-hidden
-                                    ${draggedItem ? 'bg-cyan-50/40 border-dashed border-cyan-300' : 'bg-slate-50/30 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-[inset_0_0_0_2px_rgba(16,185,129,0.2)]'}
+                                    ${draggedItem ? 'bg-indigo-50/40 border-dashed border-indigo-300' : 'bg-slate-50/30 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-[inset_0_0_0_2px_rgba(16,185,129,0.2)]'}
                                 `}
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDrop(e, chair.chairNumber, slot.timeStr)}
                                 >
-                                {/* Indicador Visual de Vaga (Sutil quando inativo, Explícito no hover) */}
+                                {/* Indicador Visual de Vaga */}
                                 {!draggedItem && (
                                     <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(#64748b_1px,transparent_1px)] [background-size:6px_6px]"></div>
                                 )}
@@ -687,13 +698,13 @@ const App: React.FC = () => {
                             const isHDF = cell.patient.treatment === 'HDF';
                             const originTurn = chair.turn1?.id === cell.patient.id ? 1 : chair.turn2?.id === cell.patient.id ? 2 : 3;
                             
-                            // Visual ainda mais compacto e "Flat" para alta densidade
+                            // VISUAL ATUALIZADO: ÍNDIGO (HD) E ROSE (HDF) - VIBRANTE
                             const bgClass = isHDF 
-                                ? 'bg-fuchsia-100 border-l-[3px] border-fuchsia-500 hover:bg-fuchsia-200' 
-                                : 'bg-sky-100 border-l-[3px] border-sky-500 hover:bg-sky-200';
+                                ? 'bg-rose-100 border-l-[4px] border-rose-600 hover:bg-rose-200' 
+                                : 'bg-indigo-100 border-l-[4px] border-indigo-600 hover:bg-indigo-200';
                             
-                            const textClass = isHDF ? 'text-fuchsia-950' : 'text-sky-950';
-                            const labelClass = isHDF ? 'text-fuchsia-700/60' : 'text-sky-700/60';
+                            const textClass = isHDF ? 'text-rose-950' : 'text-indigo-950';
+                            const labelClass = isHDF ? 'text-rose-800/80' : 'text-indigo-800/80';
 
                             return (
                                 <td 
@@ -711,14 +722,14 @@ const App: React.FC = () => {
                                         onMouseLeave={() => setHoveredInfo(null)}
                                         className={`w-full h-full rounded transition-all cursor-grab active:cursor-grabbing group relative overflow-hidden flex flex-col justify-center ${bgClass}`}
                                     >
-                                        <div className="px-1 py-1 relative z-10 flex flex-col h-full justify-center pointer-events-none">
-                                            <p className={`font-black text-[9px] uppercase leading-[1.1] truncate ${textClass}`}>
+                                        <div className="px-1 py-0.5 relative z-10 flex flex-col h-full justify-center pointer-events-none">
+                                            <p className={`font-black text-xs uppercase leading-tight truncate ${textClass}`}>
                                                 {cell.patient.name.split(' ')[0]} {cell.patient.name.split(' ').length > 1 ? cell.patient.name.split(' ')[1].substring(0,1)+'.' : ''}
                                             </p>
                                             <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                                                <span className={`text-[7px] font-black ${labelClass} opacity-80`}>{cell.patient.duration.replace(':00', 'h')}</span>
+                                                <span className={`text-[9px] font-black ${labelClass}`}>{cell.patient.duration.replace(':00', 'h')}</span>
                                                 {cell.patient.frequency !== '3x' && (
-                                                    <span className={`text-[6px] font-black px-1 rounded leading-none bg-white/50`}>{cell.patient.frequency.substring(0,3)}</span>
+                                                    <span className={`text-[8px] font-black px-1 rounded leading-none bg-white/50`}>{cell.patient.frequency.substring(0,3)}</span>
                                                 )}
                                             </div>
                                         </div>
@@ -737,12 +748,13 @@ const App: React.FC = () => {
                                 style={{ height: 1 }}
                                 >
                                 <div className="w-full h-full p-[1px]">
-                                    <div className="w-full h-full rounded relative overflow-hidden flex flex-col items-center justify-center group border border-amber-100 bg-amber-50/40">
+                                    {/* VISUAL SETUP ATUALIZADO: VERMELHO ESCURO C/ LISTRAS (ALERTA) */}
+                                    <div className="w-full h-full rounded relative overflow-hidden flex flex-col items-center justify-center group border border-red-800/30 bg-red-100">
                                         <div className="absolute inset-0 opacity-20" style={{ 
-                                            backgroundImage: 'repeating-linear-gradient(45deg, #d97706 0, #d97706 1px, transparent 1px, transparent 6px)' 
+                                            backgroundImage: 'repeating-linear-gradient(45deg, #7f1d1d 0, #7f1d1d 2px, transparent 2px, transparent 8px)' 
                                         }}></div>
                                          <div className="relative z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                             <SprayCan size={12} className="text-amber-400" />
+                                             <SprayCan size={12} className="text-red-900" />
                                          </div>
                                     </div>
                                 </div>

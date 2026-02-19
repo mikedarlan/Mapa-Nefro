@@ -7,8 +7,8 @@ export const SLOT_INTERVAL = 30;
 export const SETUP_DURATION_MINUTES = 90; // 1:30h
 
 // === SISTEMA DE BANCO DE DADOS LOCAL (HemoDB) ===
-// Atualizado para V9 (CLEAN) para iniciar vazio conforme solicitado
-const DB_PREFIX = 'HEMOSCHEDULER_DB_V9_CLEAN'; 
+// Chave ESTÁVEL e DEFINITIVA para produção
+const DB_PREFIX = 'HEMO_PRO_STABLE_V1'; 
 
 const KEYS = {
   MASTER: `${DB_PREFIX}_MASTER`,       // Fonte da verdade principal
@@ -17,8 +17,9 @@ const KEYS = {
   META: `${DB_PREFIX}_METADATA`        // Metadados do banco (versão, timestamp)
 };
 
-// Chaves legadas para migração automática
+// Chaves legadas para migração automática (Incluindo a versão V9_CLEAN anterior)
 const LEGACY_KEYS = [
+  'HEMOSCHEDULER_DB_V9_CLEAN_MASTER', // Versão anterior imediata
   'HEMOSCHEDULER_DB_V7_PRODUCTION_MASTER',
   'HEMOSCHEDULER_DB_V6_PRODUCTION_MASTER',
   'HEMOSCHEDULER_DB_V5_PRODUCTION_MASTER',
@@ -146,17 +147,35 @@ export const getStats = (data: ScheduleData) => {
   const uniqueNames = new Set<string>();
   let hdfCount = 0;
   let hdCount = 0;
+  
+  // Contadores por turno
+  let turn1Count = 0;
+  let turn2Count = 0;
+  let turn3Count = 0;
 
   ['SEG/QUA/SEX', 'TER/QUI/SÁB'].forEach(g => {
     data[g as DayGroup].forEach(c => {
-        [c.turn1, c.turn2, c.turn3].forEach(p => {
-            if (p) {
-                totalSlots++;
-                uniqueNames.add(normalizeString(p.name));
-                if (p.treatment === 'HDF') hdfCount++;
-                if (p.treatment === 'HD') hdCount++;
-            }
-        });
+        // Turno 1
+        if (c.turn1) {
+            totalSlots++;
+            uniqueNames.add(normalizeString(c.turn1.name));
+            turn1Count++;
+            if (c.turn1.treatment === 'HDF') hdfCount++; else hdCount++;
+        }
+        // Turno 2
+        if (c.turn2) {
+            totalSlots++;
+            uniqueNames.add(normalizeString(c.turn2.name));
+            turn2Count++;
+            if (c.turn2.treatment === 'HDF') hdfCount++; else hdCount++;
+        }
+        // Turno 3
+        if (c.turn3) {
+            totalSlots++;
+            uniqueNames.add(normalizeString(c.turn3.name));
+            turn3Count++;
+            if (c.turn3.treatment === 'HDF') hdfCount++; else hdCount++;
+        }
     });
   });
   
@@ -165,7 +184,13 @@ export const getStats = (data: ScheduleData) => {
     uniquePatients: uniqueNames.size,
     hdCount,
     hdfCount,
-    hdfPercent: totalSlots > 0 ? Math.round((hdfCount / totalSlots) * 100) : 0
+    hdfPercent: totalSlots > 0 ? Math.round((hdfCount / totalSlots) * 100) : 0,
+    hdPercent: totalSlots > 0 ? Math.round((hdCount / totalSlots) * 100) : 0,
+    turnStats: {
+        t1: turn1Count,
+        t2: turn2Count,
+        t3: turn3Count
+    }
   };
 };
 
@@ -173,7 +198,7 @@ const countRecords = (data: ScheduleData): number => {
   return getStats(data).totalSlots;
 };
 
-// --- CAMADA DE BANCO DE DADOS ---
+// --- CAMADA DE BANCO DE DADOS (HemoDB Core) ---
 
 export const initializeDataStore = (): { data: ScheduleData, source: string, restored: boolean } => {
   console.log("[HemoDB] Iniciando conexão com banco de dados...");
@@ -183,19 +208,18 @@ export const initializeDataStore = (): { data: ScheduleData, source: string, res
   if (rawMaster) {
     try {
       const masterData = JSON.parse(rawMaster);
+      // Validação básica: se tem as chaves principais
       if (masterData && (masterData['SEG/QUA/SEX'] || masterData['TER/QUI/SÁB'])) {
          const count = countRecords(masterData);
-         if (count > 0) {
-             console.log("[HemoDB] MASTER carregado com sucesso.");
-             return { data: normalizeData(masterData), source: 'MASTER', restored: false };
-         }
+         console.log(`[HemoDB] MASTER carregado com sucesso. Registros: ${count}`);
+         return { data: normalizeData(masterData), source: 'MASTER', restored: false };
       }
     } catch (e) {
         console.error("[HemoDB] Erro no MASTER. Tentando Recuperação...", e);
     }
   }
 
-  // 2. Falha no Master? Tenta carregar MIRROR
+  // 2. Falha no Master? Tenta carregar MIRROR (Redundância Imediata)
   const rawMirror = localStorage.getItem(KEYS.MIRROR);
   if (rawMirror) {
       try {
@@ -218,7 +242,7 @@ export const initializeDataStore = (): { data: ScheduleData, source: string, res
               if (legacyCount > 0) {
                   console.log(`[HemoDB] Migrando dados da versão antiga (${legacyKey})...`);
                   const normalized = normalizeData(legacyData);
-                  // Salva imediatamente na nova estrutura
+                  // Salva imediatamente na nova estrutura para persistir a migração
                   localStorage.setItem(KEYS.MASTER, JSON.stringify(normalized));
                   localStorage.setItem(KEYS.MIRROR, JSON.stringify(normalized));
                   return { data: normalized, source: 'LEGACY_MIGRATION', restored: true };
@@ -229,7 +253,7 @@ export const initializeDataStore = (): { data: ScheduleData, source: string, res
       }
   }
 
-  // 4. Se não achou nada (ou forçar V9), retorna o INITIAL_DATA (que agora é vazio)
+  // 4. Se não achou nada, retorna o INITIAL_DATA (Vazio)
   console.log("[HemoDB] Banco novo. Carregando dados padrão (Vazio).");
   return { data: INITIAL_DATA, source: 'EMPTY', restored: false };
 };
@@ -239,37 +263,43 @@ export const saveDataSecurely = (newData: ScheduleData, allowEmpty: boolean = fa
     const newJson = JSON.stringify(newData);
     const newCount = countRecords(newData);
     
-    // === PROTEÇÃO DE INTEGRIDADE (ANTI-WIPE) ===
+    // === PROTEÇÃO DE INTEGRIDADE (ANTI-WIPE RIGOROSO) ===
     const currentStored = localStorage.getItem(KEYS.MASTER);
     if (currentStored && !allowEmpty) {
         try {
             const currentData = JSON.parse(currentStored);
             const currentCount = countRecords(currentData);
             
-            if (currentCount > 5 && newCount === 0) {
-                const msg = `[HemoDB] PROTEÇÃO ATIVADA: Tentativa de apagar ${currentCount} registros bloqueada.`;
+            // ALTERAÇÃO CRÍTICA: Se existir PELO MENOS 1 registro, e estiver tentando salvar 0, BLOQUEIA.
+            // Antes era > 5, agora é > 0 para garantir que testes ou poucos dados não sejam perdidos.
+            if (currentCount > 0 && newCount === 0) {
+                const msg = `[HemoDB] PROTEÇÃO ATIVADA: Tentativa de sobrescrever ${currentCount} registros com base vazia bloqueada.`;
                 console.error(msg);
-                return { success: false, error: "Proteção de Dados Ativada: O banco não pode ser zerado automaticamente." };
+                return { success: false, error: "Proteção de Dados Ativada: O banco contém dados e não pode ser zerado automaticamente." };
             }
-        } catch(e) {}
+        } catch(e) {
+            // Se o JSON atual estiver corrompido, permite salvar por cima (auto-fix)
+            console.warn("JSON atual corrompido, permitindo sobrescrita.");
+        }
     }
 
     // 1. Commit no MASTER
     localStorage.setItem(KEYS.MASTER, newJson);
     
-    // 2. Commit no MIRROR (Sempre)
-    if (newCount > 0) {
-        localStorage.setItem(KEYS.MIRROR, newJson);
-    }
+    // 2. Commit no MIRROR (Sempre que salvar com sucesso)
+    localStorage.setItem(KEYS.MIRROR, newJson);
     
-    // 3. Commit no SHADOW (TRIPLA REDUNDÂNCIA AGORA SEMPRE ATIVA)
-    localStorage.setItem(KEYS.SHADOW, newJson);
+    // 3. Commit no SHADOW (TRIPLA REDUNDÂNCIA)
+    // O Shadow é um backup que tentamos não sobrescrever com zero, mas aqui simplificamos para manter sincronia
+    if (newCount > 0) {
+        localStorage.setItem(KEYS.SHADOW, newJson);
+    }
 
     // 4. Metadados
     localStorage.setItem(KEYS.META, JSON.stringify({ 
         lastSaved: new Date().toISOString(), 
         recordCount: newCount,
-        version: '9.0'
+        version: '10.0'
     }));
     
     return { success: true };
@@ -300,11 +330,13 @@ export const wipeAllData = (): ScheduleData => {
   const empty = createEmptySchedule(); 
   const emptyJson = JSON.stringify(empty);
   
+  // Limpa chaves principais
   localStorage.setItem(KEYS.MASTER, emptyJson);
   localStorage.setItem(KEYS.MIRROR, emptyJson);
   localStorage.removeItem(KEYS.SHADOW); 
   
-  LEGACY_KEYS.forEach(k => localStorage.removeItem(k));
+  // Não removemos as LEGACY_KEYS aqui para permitir rollback manual se necessário,
+  // mas o sistema vai priorizar o MASTER vazio agora.
   
   return empty;
 };
